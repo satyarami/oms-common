@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.satya.oms</groupId>
+    <artifactId>oms-common</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>oms-common</name>
+    <description>Shared OMS library - SBE schema, generated codecs, and common utilities</description>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sbe.version>1.27.0</sbe.version>
+        <agrona.version>1.22.0</agrona.version>
+    </properties>
+
+    <dependencies>
+        <!-- Agrona buffers (required by SBE generated code) -->
+        <dependency>
+            <groupId>org.agrona</groupId>
+            <artifactId>agrona</artifactId>
+            <version>${agrona.version}</version>
+        </dependency>
+        <!-- SBE runtime -->
+        <dependency>
+            <groupId>uk.co.real-logic</groupId>
+            <artifactId>sbe-all</artifactId>
+            <version>${sbe.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Tell Eclipse M2E how to handle plugins it doesn't know about -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>exec-maven-plugin</artifactId>
+                                        <versionRange>[1.0,)</versionRange>
+                                        <goals>
+                                            <goal>java</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <execute>
+                                            <runOnIncremental>false</runOnIncremental>
+                                            <runOnConfiguration>true</runOnConfiguration>
+                                        </execute>
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>build-helper-maven-plugin</artifactId>
+                                        <versionRange>[1.0,)</versionRange>
+                                        <goals>
+                                            <goal>add-source</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <execute>
+                                            <runOnIncremental>false</runOnIncremental>
+                                            <runOnConfiguration>true</runOnConfiguration>
+                                        </execute>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <!-- 1) SBE code generation from order-schema.xml -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-sbe-code</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>uk.co.real_logic.sbe.SbeTool</mainClass>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>sbe.output.dir</key>
+                                    <value>${project.build.directory}/generated-sources/sbe</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>sbe.target.language</key>
+                                    <value>Java</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>sbe.validation.stop.on.error</key>
+                                    <value>true</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>sbe.validation.warnings.fatal</key>
+                                    <value>false</value>
+                                </systemProperty>
+                            </systemProperties>
+                            <arguments>
+                                <argument>${project.basedir}/src/main/resources/order-schema.xml</argument>
+                            </arguments>
+                            <includePluginDependencies>true</includePluginDependencies>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>uk.co.real-logic</groupId>
+                        <artifactId>sbe-all</artifactId>
+                        <version>${sbe.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- 2) Register generated SBE sources -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>add-sbe-generated-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>add-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/sbe</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 3) Compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>OMS Common</name>
+            <url>https://maven.pkg.github.com/satyarami/oms-common</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <connection>scm:git:https://github.com/satyarami/oms-common.git</connection>
+        <developerConnection>scm:git:git@github.com:satyarami/oms-common.git</developerConnection>
+        <url>https://github.com/satyarami/oms-common</url>
+    </scm>
+</project>
