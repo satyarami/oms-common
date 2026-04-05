@@ -32,6 +32,7 @@
         </enum>
     </types>
 
+    <!-- Outbound order published on Aeron (existing) -->
     <message name="Order" id="1" description="Order event message">
         <field name="orderId"      id="1" type="uint64"/>
         <field name="symbolId"     id="2" type="uint32"/>
@@ -47,5 +48,38 @@
             <field name="fillPrice"   id="11" type="uint64"/>
             <field name="executionId" id="12" type="uint64"/>
         </group>
+    </message>
+
+    <!-- Handler → Gateway: new order request -->
+    <message name="OrderRequest" id="2" description="Order request sent from handler to gateway">
+        <field name="orderId"  id="1" type="uint64"/>
+        <field name="symbolId" id="2" type="uint32"/>
+        <field name="side"     id="3" type="Side"/>
+        <field name="quantity" id="4" type="uint64"/>
+        <field name="price"    id="5" type="uint64"/>
+    </message>
+
+    <!-- Gateway → Handler: order acknowledged -->
+    <message name="AckEvent" id="3" description="Acknowledgement from gateway">
+        <field name="orderId" id="1" type="uint64"/>
+    </message>
+
+    <!-- Gateway → Handler: order rejected -->
+    <message name="RejectEvent" id="4" description="Rejection from gateway">
+        <field name="orderId" id="1" type="uint64"/>
+        <field name="rejectCode" id="2" type="uint32"/>
+    </message>
+
+    <!-- Gateway → Handler: a single fill -->
+    <message name="FillEvent" id="5" description="Fill notification from gateway">
+        <field name="orderId"     id="1" type="uint64"/>
+        <field name="fillQty"     id="2" type="uint64"/>
+        <field name="fillPrice"   id="3" type="uint64"/>
+        <field name="executionId" id="4" type="uint64"/>
+    </message>
+
+    <!-- Gateway → Handler: no more fills for this order -->
+    <message name="DoneEvent" id="6" description="Order completed, no more fills">
+        <field name="orderId" id="1" type="uint64"/>
     </message>
 </sbe:messageSchema>
